@@ -1,0 +1,100 @@
+{
+  "session": {
+    "id": "br_d4dpnw",
+    "name": null,
+    "engine": "h5i-light",
+    "placement": {
+      "kind": "host"
+    },
+    "lane": "engine-claimed",
+    "url": "https://example.com",
+    "started_at": "2026-09-05T19:20:17.488893Z",
+    "expires_at": null,
+    "storage": "ephemeral",
+    "policy_digest": "sha256:7cc4a000e5653d29fe0b9ba194d884f3baf289b02322c7f4bc287f54df8bb9fd",
+    "identity": "native",
+    "identity_digest": "41d6d1e2e06716c1",
+    "restored_from": null,
+    "state": "closed",
+    "ended_at": "2026-09-05T19:21:18.679568Z",
+    "end_reason": "closed by the user",
+    "confinement": {
+      "kind": "none",
+      "why": "this host has no Landlock, unprivileged user namespaces, seccomp"
+    },
+    "enclosing_box": null,
+    "control": {
+      "channel": "port",
+      "file": null,
+      "witness": null,
+      "pid": null
+    },
+    "logs": {
+      "actions": "sessions/br_d4dpnw/actions.jsonl",
+      "requests": "sessions/br_d4dpnw/requests.jsonl"
+    }
+  },
+  "sources": {
+    "actions": "read",
+    "requests": "read",
+    "control": "empty",
+    "helpers": "empty"
+  },
+  "events": [
+    {
+      "id": 1,
+      "observed_at": "2026-09-05T19:20:17.488893Z",
+      "lane": "host-observed",
+      "grade": "fail-closed",
+      "kind": "lifecycle",
+      "state": "opened",
+      "reason": "https://example.com — on this machine, unconfined — this host has no Landlock, unprivileged user namespaces, seccomp"
+    },
+    {
+      "id": 2,
+      "observed_at": "2026-09-05T19:29:54.761554Z",
+      "lane": "box-claimed",
+      "grade": "fail-closed",
+      "claimed_at": "2026-09-05T19:20:17.603346Z",
+      "kind": "request",
+      "seq": 0,
+      "method": "GET",
+      "url": "https://example.com/",
+      "initiator": "navigation",
+      "allowed": true
+    },
+    {
+      "id": 3,
+      "observed_at": "2026-09-05T19:29:54.761554Z",
+      "lane": "box-claimed",
+      "grade": "fail-closed",
+      "caused_by": 2,
+      "claimed_at": "2026-09-05T19:20:17.660628Z",
+      "kind": "response",
+      "seq": 0,
+      "status": 200,
+      "bytes": 559,
+      "duration_ms": 56
+    },
+    {
+      "id": 4,
+      "observed_at": "2026-09-05T19:29:54.761554Z",
+      "lane": "box-claimed",
+      "grade": "best-effort",
+      "claimed_at": "2026-09-05T19:20:37.290850Z",
+      "kind": "agent-action",
+      "action": "snapshot null",
+      "forwarded": true
+    },
+    {
+      "id": 5,
+      "observed_at": "2026-09-05T19:21:18.679568Z",
+      "lane": "host-observed",
+      "grade": "fail-closed",
+      "kind": "lifecycle",
+      "state": "closed",
+      "reason": "closed by the user"
+    }
+  ],
+  "dropped": 0
+}

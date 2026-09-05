@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>h5i audit report — br_d4dpnw</title>
+<style>
+
+:root {
+  --bg: #f7f5f1;
+  --ink: #1c1b19;
+  --muted: #5c5852;
+  --line: #d9d3c8;
+  --host: #1f6b4a;
+  --box: #8a5a12;
+  --deny: #8b1e1e;
+  --allow: #1f6b4a;
+  --partial: #8a5a12;
+  --unavailable: #8b1e1e;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0 auto;
+  max-width: 52rem;
+  padding: 1.5rem 1.25rem 3rem;
+  font: 15px/1.45 "Segoe UI", system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+}
+h1 { font-size: 1.5rem; margin: 0 0 1rem; }
+h2 { font-size: 1.1rem; margin: 1.75rem 0 0.75rem; }
+.summary { display: grid; grid-template-columns: 9rem 1fr; gap: 0.35rem 1rem; margin: 0; }
+.summary dt { color: var(--muted); }
+.summary dd { margin: 0; word-break: break-word; }
+.sources, .counts { list-style: none; padding: 0; margin: 0; }
+.sources li, .counts li { padding: 0.25rem 0; }
+.src-name { font-weight: 600; min-width: 6rem; display: inline-block; }
+.avail { font-family: ui-monospace, monospace; font-size: 0.9em; }
+.avail-read { color: var(--allow); }
+.avail-empty { color: var(--muted); }
+.avail-unavailable { color: var(--unavailable); font-weight: 600; }
+.avail-partial { color: var(--partial); font-weight: 600; }
+.dropped { color: var(--partial); }
+.filter-bar { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.75rem; }
+.timeline { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--line); }
+.event { padding: 0.75rem 0; border-bottom: 1px solid var(--line); }
+.meta { color: var(--muted); font-size: 0.85rem; display: flex; flex-wrap: wrap; gap: 0.4rem 0.65rem; }
+.eid, .kind { font-family: ui-monospace, monospace; color: var(--ink); }
+.lane-host { color: var(--host); font-weight: 600; }
+.lane-box { color: var(--box); font-weight: 600; }
+.detail { margin-top: 0.35rem; word-break: break-word; }
+.badge { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; }
+.badge.allowed { color: var(--allow); }
+.badge.denied { color: var(--deny); }
+.decision-denied .detail { color: var(--deny); }
+.initiator { color: var(--muted); font-size: 0.9em; }
+.unknown-fields { margin: 0.35rem 0 0; padding-left: 1.2rem; }
+
+</style>
+</head>
+<body>
+<header>
+<h1>h5i audit report</h1>
+</header>
+<section>
+<h2>Session</h2>
+<dl class="summary">
+<dt>ID</dt><dd>br_d4dpnw</dd>
+<dt>URL</dt><dd>https://example.com</dd>
+<dt>Placement</dt><dd>host</dd>
+<dt>Engine</dt><dd>h5i-light</dd>
+<dt>Session lane</dt><dd>engine-claimed</dd>
+<dt>State</dt><dd>closed</dd>
+<dt>Started</dt><dd>2026-09-05T19:20:17.488893Z</dd>
+<dt>Ended</dt><dd>2026-09-05T19:21:18.679568Z</dd>
+<dt>End reason</dt><dd>closed by the user</dd>
+<dt>Policy digest</dt><dd>sha256:7cc4a000e5653d29fe0b9ba194d884f3baf289b02322c7f4bc287f54df8bb9fd</dd>
+<dt>Identity</dt><dd>native</dd>
+</dl>
+</section>
+<section>
+<h2>Evidence sources</h2>
+<ul class="sources">
+<li><span class="src-name">actions</span> <span class="avail avail-read">read</span></li>
+<li><span class="src-name">requests</span> <span class="avail avail-read">read</span></li>
+<li><span class="src-name">control</span> <span class="avail avail-empty">empty</span></li>
+<li><span class="src-name">helpers</span> <span class="avail avail-empty">empty</span></li>
+<li><span class="src-name">messages</span> <span class="avail avail-empty">empty</span></li>
+</ul>
+</section>
+<section>
+<h2>Summary</h2>
+<ul class="counts">
+<li>Agent actions: <strong>1</strong></li>
+<li>Allowed requests: <strong>1</strong></li>
+<li>Denied requests: <strong>0</strong></li>
+</ul>
+</section>
+<section class="filters">
+<h2>Timeline</h2>
+<div class="filter-bar">
+<label>Event type <select id="filter-type">
+<option value="all">All</option>
+<option value="lifecycle">lifecycle</option>
+<option value="request">request</option>
+<option value="response">response</option>
+<option value="agent-action">agent-action</option>
+</select></label>
+<label>Request decision <select id="filter-decision">
+<option value="all">All</option>
+<option value="allowed">Allowed</option>
+<option value="denied">Denied</option>
+</select></label>
+</div>
+<ol class="timeline" id="timeline">
+<li class="event" data-event data-kind="lifecycle" data-decision="">
+<div class="meta"><span class="eid">#1</span> <time>2026-09-05T19:20:17.488893Z</time> <span class="lane lane-host">host-observed</span> <span class="grade">fail-closed</span> <span class="kind">lifecycle</span></div>
+<div class="detail">state opened — https://example.com — on this machine, unconfined — this host has no Landlock, unprivileged user namespaces, seccomp</div>
+</li>
+<li class="event decision-allowed" data-event data-kind="request" data-decision="allowed">
+<div class="meta"><span class="eid">#2</span> <time>2026-09-05T19:29:54.761554Z</time> <span class="lane lane-box">box-claimed</span> <span class="grade">fail-closed</span> <span class="kind">request</span> <span class="claimed">claimed 2026-09-05T19:20:17.603346Z</span></div>
+<div class="detail">#0 GET https://example.com/ <span class="initiator">navigation</span> <span class="badge allowed">Allowed</span></div>
+</li>
+<li class="event" data-event data-kind="response" data-decision="">
+<div class="meta"><span class="eid">#3</span> <time>2026-09-05T19:29:54.761554Z</time> <span class="lane lane-box">box-claimed</span> <span class="grade">fail-closed</span> <span class="kind">response</span> <span class="caused">caused by #2</span> <span class="claimed">claimed 2026-09-05T19:20:17.660628Z</span></div>
+<div class="detail">#0 status 200 · 559 bytes · 56 ms</div>
+</li>
+<li class="event" data-event data-kind="agent-action" data-decision="">
+<div class="meta"><span class="eid">#4</span> <time>2026-09-05T19:29:54.761554Z</time> <span class="lane lane-box">box-claimed</span> <span class="grade">best-effort</span> <span class="kind">agent-action</span> <span class="claimed">claimed 2026-09-05T19:20:37.290850Z</span></div>
+<div class="detail">verb snapshot null</div>
+</li>
+<li class="event" data-event data-kind="lifecycle" data-decision="">
+<div class="meta"><span class="eid">#5</span> <time>2026-09-05T19:21:18.679568Z</time> <span class="lane lane-host">host-observed</span> <span class="grade">fail-closed</span> <span class="kind">lifecycle</span></div>
+<div class="detail">state closed — closed by the user</div>
+</li>
+</ol>
+</section>
+<script>
+
+(function () {
+  var typeSel = document.getElementById("filter-type");
+  var decSel = document.getElementById("filter-decision");
+  if (!typeSel || !decSel) return;
+  function apply() {
+    var type = typeSel.value;
+    var decision = decSel.value;
+    var nodes = document.querySelectorAll("[data-event]");
+    for (var i = 0; i < nodes.length; i++) {
+      var el = nodes[i];
+      var kind = el.getAttribute("data-kind") || "";
+      var dec = el.getAttribute("data-decision") || "";
+      var show = true;
+      if (type !== "all" && kind !== type) show = false;
+      if (decision !== "all" && dec !== decision) show = false;
+      el.hidden = !show;
+    }
+  }
+  typeSel.addEventListener("change", apply);
+  decSel.addEventListener("change", apply);
+})();
+
+</script>
+</body>
+</html>

@@ -103,9 +103,7 @@ fn parse_args(args: &[String]) -> Result<Command, String> {
 
 fn read_input(input: &Option<PathBuf>) -> Result<String, String> {
     match input {
-        Some(path) => {
-            fs::read_to_string(path).map_err(|e| format!("failed to read {}: {e}", path.display()))
-        }
+        Some(path) => read_file(path),
         None => {
             let mut buf = String::new();
             io::stdin()
@@ -114,6 +112,15 @@ fn read_input(input: &Option<PathBuf>) -> Result<String, String> {
             Ok(buf)
         }
     }
+}
+
+fn read_file(path: &Path) -> Result<String, String> {
+    let mut bytes =
+        fs::read(path).map_err(|e| format!("failed to read {}: {e}", path.display()))?;
+    if bytes.starts_with(&[0xEF, 0xBB, 0xBF]) {
+        bytes.drain(..3);
+    }
+    String::from_utf8(bytes).map_err(|e| format!("failed to read {}: {e}", path.display()))
 }
 
 fn write_output(output: &Option<PathBuf>, html: &str) -> Result<(), String> {
@@ -257,6 +264,24 @@ mod tests {
     fn rejects_unknown_option() {
         let err = parse_args(&args(&["--wat"])).unwrap_err();
         assert!(err.contains("unknown option"), "{err}");
+    }
+
+    #[test]
+    fn file_input_strips_utf8_bom() {
+        let dir = std::env::temp_dir().join(format!("h5i-audit-report-bom-{}", std::process::id()));
+        let _ = fs::create_dir_all(&dir);
+        let input = dir.join("bom.json");
+
+        let json = r#"{"ok":true}"#;
+        let mut bytes = vec![0xEF, 0xBB, 0xBF];
+        bytes.extend_from_slice(json.as_bytes());
+        fs::write(&input, bytes).unwrap();
+
+        let text = read_input(&Some(input)).unwrap();
+        assert_eq!(text, json);
+        assert!(!text.as_bytes().starts_with(&[0xEF, 0xBB, 0xBF]));
+
+        let _ = fs::remove_dir_all(&dir);
     }
 
     #[test]
