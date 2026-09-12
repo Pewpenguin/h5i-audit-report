@@ -56,7 +56,8 @@ pub fn parse_audit_value(value: Value) -> Result<Audit, Error> {
 mod tests {
     use super::*;
     use crate::model::{
-        Availability, Engine, EventKind, EventLane, Grade, Placement, SessionLane, State,
+        Availability, Confinement, Engine, EventKind, EventLane, Grade, Placement, SessionLane,
+        State,
     };
     use serde_json::json;
 
@@ -323,5 +324,97 @@ mod tests {
     fn dropped_count_is_parsed() {
         let audit = parse_audit_value(fixture(json!([]), 42)).unwrap();
         assert_eq!(audit.dropped, 42);
+    }
+
+    #[test]
+    fn unknown_string_enums_are_preserved() {
+        let mut audit = fixture(json!([]), 0);
+        audit["session"]["engine"] = json!("future-engine");
+        audit["session"]["lane"] = json!("future-lane");
+        audit["session"]["state"] = json!("hibernating");
+        audit["sources"]["actions"] = json!("archived");
+
+        let audit = parse_audit_value(audit).unwrap();
+        assert_eq!(
+            audit.session.engine,
+            Engine::Unknown("future-engine".into())
+        );
+        assert_eq!(
+            audit.session.lane,
+            SessionLane::Unknown("future-lane".into())
+        );
+        assert_eq!(audit.session.state, State::Unknown("hibernating".into()));
+        assert_eq!(
+            audit.sources.actions,
+            Availability::Unknown("archived".into())
+        );
+    }
+
+    #[test]
+    fn unknown_event_lane_and_grade_are_preserved() {
+        let event = envelope(
+            1,
+            "side-channel",
+            "optimistic",
+            json!({
+                "kind": "lifecycle",
+                "state": "opened"
+            }),
+        );
+        let audit = parse_audit_value(fixture(json!([event]), 0)).unwrap();
+        assert_eq!(
+            audit.events[0].lane,
+            EventLane::Unknown("side-channel".into())
+        );
+        assert_eq!(audit.events[0].grade, Grade::Unknown("optimistic".into()));
+        assert!(matches!(audit.events[0].kind, EventKind::Lifecycle { .. }));
+    }
+
+    #[test]
+    fn unknown_placement_kind_is_preserved() {
+        let mut audit = fixture(json!([]), 0);
+        audit["session"]["placement"] = json!({
+            "kind": "vm",
+            "image": "alpine"
+        });
+        let audit = parse_audit_value(audit).unwrap();
+        match audit.session.placement {
+            Placement::Unknown { kind, fields } => {
+                assert_eq!(kind, "vm");
+                assert_eq!(fields.get("image").and_then(Value::as_str), Some("alpine"));
+            }
+            other => panic!("expected unknown placement, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn unknown_confinement_kind_is_preserved() {
+        let mut audit = fixture(json!([]), 0);
+        audit["session"]["confinement"] = json!({
+            "kind": "bubblewrap",
+            "profile": "strict"
+        });
+        let audit = parse_audit_value(audit).unwrap();
+        match audit.session.confinement {
+            Some(Confinement::Unknown { kind, fields }) => {
+                assert_eq!(kind, "bubblewrap");
+                assert_eq!(
+                    fields.get("profile").and_then(Value::as_str),
+                    Some("strict")
+                );
+            }
+            other => panic!("expected unknown confinement, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn known_box_placement_still_parses() {
+        let mut audit = fixture(json!([]), 0);
+        audit["session"]["placement"] = json!({"kind": "box", "name": "web"});
+        let audit = parse_audit_value(audit).unwrap();
+        assert_eq!(
+            audit.session.placement,
+            Placement::Box { name: "web".into() }
+        );
     }
 }

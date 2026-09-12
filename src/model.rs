@@ -37,42 +37,143 @@ pub struct Session {
     pub restored_from: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-#[serde(tag = "kind", rename_all = "kebab-case")]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Placement {
     Host,
-    Box { name: String },
+    Box {
+        name: String,
+    },
+    Unknown {
+        kind: String,
+        fields: Map<String, Value>,
+    },
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
-#[serde(rename_all = "kebab-case")]
+impl<'de> Deserialize<'de> for Placement {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let mut map = Map::<String, Value>::deserialize(deserializer)?;
+        let kind = take_kind(&mut map)?;
+        match kind.as_str() {
+            "host" => Ok(Placement::Host),
+            "box" => {
+                let name = match map.remove("name") {
+                    Some(Value::String(s)) => s,
+                    Some(other) => {
+                        return Err(serde::de::Error::custom(format!(
+                            "`placement.name` must be a string, got {other}"
+                        )));
+                    }
+                    None => {
+                        return Err(serde::de::Error::custom(
+                            "missing field `name` for placement kind `box`",
+                        ));
+                    }
+                };
+                Ok(Placement::Box { name })
+            }
+            _ => Ok(Placement::Unknown { kind, fields: map }),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Engine {
     H5iLight,
     Chromium,
+    Unknown(String),
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
-#[serde(rename_all = "kebab-case")]
+impl<'de> Deserialize<'de> for Engine {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let s = String::deserialize(deserializer)?;
+        Ok(match s.as_str() {
+            "h5i-light" => Engine::H5iLight,
+            "chromium" => Engine::Chromium,
+            _ => Engine::Unknown(s),
+        })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SessionLane {
     EngineClaimed,
     HostObserved,
+    Unknown(String),
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
-#[serde(rename_all = "kebab-case")]
+impl<'de> Deserialize<'de> for SessionLane {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let s = String::deserialize(deserializer)?;
+        Ok(match s.as_str() {
+            "engine-claimed" => SessionLane::EngineClaimed,
+            "host-observed" => SessionLane::HostObserved,
+            _ => SessionLane::Unknown(s),
+        })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum State {
     Live,
     Closed,
     Died,
     Expired,
     Evicted,
+    Unknown(String),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-#[serde(tag = "kind", rename_all = "kebab-case")]
+impl<'de> Deserialize<'de> for State {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let s = String::deserialize(deserializer)?;
+        Ok(match s.as_str() {
+            "live" => State::Live,
+            "closed" => State::Closed,
+            "died" => State::Died,
+            "expired" => State::Expired,
+            "evicted" => State::Evicted,
+            _ => State::Unknown(s),
+        })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Confinement {
     Process,
-    None { why: String },
+    None {
+        why: String,
+    },
+    /// A confinement kind this build does not model.
+    Unknown {
+        kind: String,
+        fields: Map<String, Value>,
+    },
+}
+
+impl<'de> Deserialize<'de> for Confinement {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let mut map = Map::<String, Value>::deserialize(deserializer)?;
+        let kind = take_kind(&mut map)?;
+        match kind.as_str() {
+            "process" => Ok(Confinement::Process),
+            "none" => {
+                let why = match map.remove("why") {
+                    Some(Value::String(s)) => s,
+                    Some(other) => {
+                        return Err(serde::de::Error::custom(format!(
+                            "`confinement.why` must be a string, got {other}"
+                        )));
+                    }
+                    None => {
+                        return Err(serde::de::Error::custom(
+                            "missing field `why` for confinement kind `none`",
+                        ));
+                    }
+                };
+                Ok(Confinement::None { why })
+            }
+            _ => Ok(Confinement::Unknown { kind, fields: map }),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
@@ -86,8 +187,7 @@ pub struct Sources {
     pub messages: Availability,
 }
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum Availability {
     Read,
     /// Matches h5i's serde default for helpers/messages.
@@ -95,6 +195,20 @@ pub enum Availability {
     Empty,
     Unavailable,
     Partial,
+    Unknown(String),
+}
+
+impl<'de> Deserialize<'de> for Availability {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let s = String::deserialize(deserializer)?;
+        Ok(match s.as_str() {
+            "read" => Availability::Read,
+            "empty" => Availability::Empty,
+            "unavailable" => Availability::Unavailable,
+            "partial" => Availability::Partial,
+            _ => Availability::Unknown(s),
+        })
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -108,18 +222,40 @@ pub struct Event {
     pub kind: EventKind,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum EventLane {
     HostObserved,
     BoxClaimed,
+    Unknown(String),
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
-#[serde(rename_all = "kebab-case")]
+impl<'de> Deserialize<'de> for EventLane {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let s = String::deserialize(deserializer)?;
+        Ok(match s.as_str() {
+            "host-observed" => EventLane::HostObserved,
+            "box-claimed" => EventLane::BoxClaimed,
+            _ => EventLane::Unknown(s),
+        })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Grade {
     FailClosed,
     BestEffort,
+    Unknown(String),
+}
+
+impl<'de> Deserialize<'de> for Grade {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let s = String::deserialize(deserializer)?;
+        Ok(match s.as_str() {
+            "fail-closed" => Grade::FailClosed,
+            "best-effort" => Grade::BestEffort,
+            _ => Grade::Unknown(s),
+        })
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -267,6 +403,14 @@ impl<'de> Deserialize<'de> for Event {
             claimed_at: wire.claimed_at,
             kind,
         })
+    }
+}
+
+fn take_kind<E: serde::de::Error>(map: &mut Map<String, Value>) -> Result<String, E> {
+    match map.remove("kind") {
+        Some(Value::String(s)) => Ok(s),
+        Some(other) => Err(E::custom(format!("`kind` must be a string, got {other}"))),
+        None => Err(E::custom("missing field `kind`")),
     }
 }
 
