@@ -40,9 +40,9 @@ fn render_session(out: &mut String, audit: &Audit) {
     }
     row(out, "URL", &s.url);
     row(out, "Placement", &placement_label(&s.placement));
-    row(out, "Engine", engine_label(s.engine));
-    row(out, "Session lane", session_lane_label(s.lane));
-    row(out, "State", state_label(s.state));
+    row(out, "Engine", &engine_label(&s.engine));
+    row(out, "Session lane", &session_lane_label(&s.lane));
+    row(out, "State", &state_label(&s.state));
     row(out, "Started", &s.started_at);
     row(out, "Ended", s.ended_at.as_deref().unwrap_or("—"));
     row(out, "End reason", s.end_reason.as_deref().unwrap_or("—"));
@@ -55,11 +55,11 @@ fn render_session(out: &mut String, audit: &Audit) {
 
 fn render_sources(out: &mut String, sources: &Sources, dropped: u64) {
     out.push_str("<section>\n<h2>Evidence sources</h2>\n<ul class=\"sources\">\n");
-    source_item(out, "actions", sources.actions);
-    source_item(out, "requests", sources.requests);
-    source_item(out, "control", sources.control);
-    source_item(out, "helpers", sources.helpers);
-    source_item(out, "messages", sources.messages);
+    source_item(out, "actions", &sources.actions);
+    source_item(out, "requests", &sources.requests);
+    source_item(out, "control", &sources.control);
+    source_item(out, "helpers", &sources.helpers);
+    source_item(out, "messages", &sources.messages);
     out.push_str("</ul>\n");
     if dropped > 0 {
         out.push_str("<p class=\"dropped\">");
@@ -71,14 +71,14 @@ fn render_sources(out: &mut String, sources: &Sources, dropped: u64) {
     out.push_str("</section>\n");
 }
 
-fn source_item(out: &mut String, name: &str, availability: Availability) {
+fn source_item(out: &mut String, name: &str, availability: &Availability) {
     let label = availability_label(availability);
     out.push_str("<li><span class=\"src-name\">");
     out.push_str(&esc(name));
     out.push_str("</span> <span class=\"avail ");
     out.push_str(availability_class(availability));
     out.push_str("\">");
-    out.push_str(&esc(label));
+    out.push_str(&esc(&label));
     out.push_str("</span></li>\n");
 }
 
@@ -178,12 +178,12 @@ fn render_event(out: &mut String, event: &Event) {
     out.push_str(&esc(&event.observed_at));
     out.push_str("</time> ");
     out.push_str("<span class=\"lane ");
-    out.push_str(event_lane_class(event.lane));
+    out.push_str(event_lane_class(&event.lane));
     out.push_str("\">");
-    out.push_str(&esc(event_lane_label(event.lane)));
+    out.push_str(&esc(&event_lane_label(&event.lane)));
     out.push_str("</span> ");
     out.push_str("<span class=\"grade\">");
-    out.push_str(&esc(grade_label(event.grade)));
+    out.push_str(&esc(&grade_label(&event.grade)));
     out.push_str("</span> ");
     out.push_str("<span class=\"kind\">");
     out.push_str(&esc(kind));
@@ -366,69 +366,78 @@ fn placement_label(placement: &Placement) -> String {
     match placement {
         Placement::Host => "host".into(),
         Placement::Box { name } => format!("box ({name})"),
+        Placement::Unknown { kind, .. } => kind.clone(),
     }
 }
 
-fn engine_label(engine: Engine) -> &'static str {
+fn engine_label(engine: &Engine) -> String {
     match engine {
-        Engine::H5iLight => "h5i-light",
-        Engine::Chromium => "chromium",
+        Engine::H5iLight => "h5i-light".into(),
+        Engine::Chromium => "chromium".into(),
+        Engine::Unknown(s) => s.clone(),
     }
 }
 
-fn session_lane_label(lane: SessionLane) -> &'static str {
+fn session_lane_label(lane: &SessionLane) -> String {
     match lane {
-        SessionLane::EngineClaimed => "engine-claimed",
-        SessionLane::HostObserved => "host-observed",
+        SessionLane::EngineClaimed => "engine-claimed".into(),
+        SessionLane::HostObserved => "host-observed".into(),
+        SessionLane::Unknown(s) => s.clone(),
     }
 }
 
-fn state_label(state: State) -> &'static str {
+fn state_label(state: &State) -> String {
     match state {
-        State::Live => "live",
-        State::Closed => "closed",
-        State::Died => "died",
-        State::Expired => "expired",
-        State::Evicted => "evicted",
+        State::Live => "live".into(),
+        State::Closed => "closed".into(),
+        State::Died => "died".into(),
+        State::Expired => "expired".into(),
+        State::Evicted => "evicted".into(),
+        State::Unknown(s) => s.clone(),
     }
 }
 
-fn availability_label(a: Availability) -> &'static str {
+fn availability_label(a: &Availability) -> String {
     match a {
-        Availability::Read => "read",
-        Availability::Empty => "empty",
-        Availability::Unavailable => "unavailable",
-        Availability::Partial => "partial",
+        Availability::Read => "read".into(),
+        Availability::Empty => "empty".into(),
+        Availability::Unavailable => "unavailable".into(),
+        Availability::Partial => "partial".into(),
+        Availability::Unknown(s) => s.clone(),
     }
 }
 
-fn availability_class(a: Availability) -> &'static str {
+fn availability_class(a: &Availability) -> &'static str {
     match a {
         Availability::Read => "avail-read",
         Availability::Empty => "avail-empty",
         Availability::Unavailable => "avail-unavailable",
         Availability::Partial => "avail-partial",
+        Availability::Unknown(_) => "avail-unknown",
     }
 }
 
-fn event_lane_label(lane: EventLane) -> &'static str {
+fn event_lane_label(lane: &EventLane) -> String {
     match lane {
-        EventLane::HostObserved => "host-observed",
-        EventLane::BoxClaimed => "box-claimed",
+        EventLane::HostObserved => "host-observed".into(),
+        EventLane::BoxClaimed => "box-claimed".into(),
+        EventLane::Unknown(s) => s.clone(),
     }
 }
 
-fn event_lane_class(lane: EventLane) -> &'static str {
+fn event_lane_class(lane: &EventLane) -> &'static str {
     match lane {
         EventLane::HostObserved => "lane-host",
         EventLane::BoxClaimed => "lane-box",
+        EventLane::Unknown(_) => "",
     }
 }
 
-fn grade_label(grade: Grade) -> &'static str {
+fn grade_label(grade: &Grade) -> String {
     match grade {
-        Grade::FailClosed => "fail-closed",
-        Grade::BestEffort => "best-effort",
+        Grade::FailClosed => "fail-closed".into(),
+        Grade::BestEffort => "best-effort".into(),
+        Grade::Unknown(s) => s.clone(),
     }
 }
 
@@ -467,6 +476,7 @@ h2 { font-size: 1.1rem; margin: 1.75rem 0 0.75rem; }
 .avail-empty { color: var(--muted); }
 .avail-unavailable { color: var(--unavailable); font-weight: 600; }
 .avail-partial { color: var(--partial); font-weight: 600; }
+.avail-unknown { color: var(--muted); font-weight: 600; }
 .dropped { color: var(--partial); }
 .filter-bar { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.75rem; }
 .timeline { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--line); }
@@ -729,5 +739,34 @@ mod tests {
         assert!(!lower.contains("src='http"));
         assert!(!lower.contains("href=\"http"));
         assert!(!lower.contains("href='http"));
+    }
+
+    #[test]
+    fn unknown_enum_values_are_rendered_escaped() {
+        let mut audit = sample_audit(vec![envelope(
+            1,
+            EventKind::Lifecycle {
+                state: "opened".into(),
+                reason: None,
+            },
+        )]);
+        audit.session.engine = Engine::Unknown("future<script>".into());
+        audit.session.state = State::Unknown("hibernating".into());
+        audit.session.placement = Placement::Unknown {
+            kind: "vm".into(),
+            fields: Default::default(),
+        };
+        audit.sources.actions = Availability::Unknown("archived".into());
+        audit.events[0].lane = EventLane::Unknown("side-channel".into());
+        audit.events[0].grade = Grade::Unknown("optimistic".into());
+
+        let html = render_report(&audit);
+        assert!(html.contains("future&lt;script&gt;"));
+        assert!(!html.contains("future<script>"));
+        assert!(html.contains("hibernating"));
+        assert!(html.contains(">vm<") || html.contains(">vm</"));
+        assert!(html.contains("archived"));
+        assert!(html.contains("side-channel"));
+        assert!(html.contains("optimistic"));
     }
 }
